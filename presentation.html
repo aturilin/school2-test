@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аудит координации — Ромашка</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0a0a0f;
+  color: #e8e8f0;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.slides-container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.slide {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  pointer-events: none;
+  padding: 60px 80px;
+}
+
+.slide.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.slide-inner {
+  max-width: 1100px;
+  width: 100%;
+}
+
+/* Navigation */
+.nav-dots {
+  position: fixed;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 100;
+}
+
+.nav-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.nav-dot.active {
+  background: #ff4444;
+  border-color: #ff4444;
+  box-shadow: 0 0 12px rgba(255,68,68,0.4);
+}
+
+.slide-counter {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  z-index: 100;
+}
+
+/* Typography */
+h1 {
+  font-size: 3.2rem;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 40px;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.red { color: #ff4444; }
+.yellow { color: #ffaa00; }
+.green { color: #44cc88; }
+.dim { color: rgba(255,255,255,0.4); }
+
+/* Slide 1 — Title */
+.title-slide h1 {
+  font-size: 4rem;
+  margin-bottom: 16px;
+}
+
+.title-meta {
+  display: flex;
+  gap: 32px;
+  margin-top: 40px;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.35);
+}
+
+.title-meta span {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-row {
+  display: flex;
+  gap: 40px;
+  margin-top: 48px;
+}
+
+.stat-box {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.4);
+  margin-top: 4px;
+}
+
+/* Slide 2 — Duplication */
+.vs-container {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin: 32px 0;
+}
+
+.vs-card {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 28px;
+  transition: all 0.3s;
+}
+
+.vs-card:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,68,68,0.3);
+}
+
+.vs-card h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.vs-card p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.6);
+}
+
+.vs-divider {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ff4444;
+  text-shadow: 0 0 20px rgba(255,68,68,0.3);
+}
+
+.warning-bar {
+  background: rgba(255,68,68,0.08);
+  border-left: 3px solid #ff4444;
+  padding: 16px 20px;
+  margin-top: 24px;
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.7);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Slide 3 — Ghost */
+.ghost-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 32px 0;
+}
+
+.ghost-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.ghost-item:hover {
+  background: rgba(255,170,0,0.06);
+  border-color: rgba(255,170,0,0.2);
+}
+
+.ghost-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.ghost-label {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.ghost-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffaa00;
+  margin-top: 4px;
+}
+
+/* Slide 4 — Circular */
+.circle-diagram {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 40px 0;
+  position: relative;
+}
+
+.circle-ring {
+  width: 380px;
+  height: 380px;
+  position: relative;
+}
+
+.circle-node {
+  position: absolute;
+  width: 120px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.circle-node:hover { transform: scale(1.08); }
+
+.circle-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.circle-wait {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.4;
+}
+
+.circle-node:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%); }
+.circle-node:nth-child(2) { bottom: 40px; right: -10px; }
+.circle-node:nth-child(3) { bottom: 40px; left: -10px; }
+
+.circle-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+.arrow-path {
+  fill: none;
+  stroke: #ff4444;
+  stroke-width: 2;
+  stroke-dasharray: 8,6;
+  animation: dash 1.5s linear infinite;
+}
+
+@keyframes dash {
+  to { stroke-dashoffset: -28; }
+}
+
+/* Slide 5 — Two dates */
+.timeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 32px 0;
+  position: relative;
+}
+
+.timeline-bar {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+}
+
+.date-group {
+  flex: 1;
+  padding: 24px;
+  border-radius: 12px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.date-group.june1 {
+  background: rgba(68,204,136,0.06);
+  border: 1px solid rgba(68,204,136,0.15);
+}
+
+.date-group.june15 {
+  background: rgba(255,68,68,0.06);
+  border: 1px solid rgba(255,68,68,0.15);
+}
+
+.date-big {
+  font-size: 2.4rem;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.date-who {
+  margin-top: 16px;
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.8;
+}
+
+.gap-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  z-index: 2;
+  position: relative;
+}
+
+.gap-badge {
+  background: rgba(255,68,68,0.15);
+  border: 1px solid rgba(255,68,68,0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: #ff4444;
+  white-space: nowrap;
+}
+
+/* Slide 6 — Actions */
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 32px 0;
+}
+
+.action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.action-item:hover {
+  background: rgba(68,204,136,0.05);
+  border-color: rgba(68,204,136,0.15);
+}
+
+.action-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #44cc88;
+  min-width: 32px;
+}
+
+.action-text h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.action-text p {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.5;
+}
+
+/* Canvas background */
+canvas#bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="slides-container">
+
+  <!-- Slide 1: Title -->
+  <div class="slide active" data-slide="0">
+    <div class="slide-inner title-slide">
+      <p class="subtitle mono">AI Lead → Учредители</p>
+      <h1>Аудит координации<br><span class="red">Онлайн-школа «Ромашка»</span></h1>
+      <p class="subtitle">Перекрёстный анализ 9 созвонов за 2 недели</p>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-number red">4</div>
+          <div class="stat-label">критических проблемы</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number yellow">9</div>
+          <div class="stat-label">созвонов проанализировано</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number dim">14</div>
+          <div class="stat-label">дней до запуска</div>
+        </div>
+      </div>
+      <div class="title-meta">
+        <span>Май 2026</span>
+        <span>Подготовка к летнему сезону</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 2: Duplication -->
+  <div class="slide" data-slide="1">
+    <div class="slide-inner">
+      <p class="subtitle mono red">Проблема #1</p>
+      <h2>Дублирование усилий <span class="dim">по продажам</span></h2>
+      <div class="vs-container">
+        <div class="vs-card">
+          <h3>Виктор</h3>
+          <p>Нанимает 2 менеджеров из Учи.ру для расширения отдела продаж. Готовит бюджет и план.</p>
+          <p style="margin-top:12px;color:rgba(255,255,255,0.3)">Синк 5 мая, синк 12 мая</p>
+        </div>
+        <div class="vs-divider">VS</div>
+        <div class="vs-card">
+          <h3>Максим</h3>
+          <p>Разрабатывает чат-бота для автоматизации первичных продаж. Тратит время CTO на это вместо LMS.</p>
+          <p style="margin-top:12px;color:rgba(255,255,255,0.3)">Tech-sync 8 мая, cross-team 15 мая</p>
+        </div>
+      </div>
+      <div class="warning-bar">
+        Оба ссылаются на поддержку Георгия. Ни на одном созвоне не обсуждалась координация двух направлений.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Ghost project -->
+  <div class="slide" data-slide="2">
+    <div class="slide-inner">
+      <p class="subtitle mono yellow">Проблема #2</p>
+      <h2>Летний интенсив — <span class="yellow">проект-призрак</span></h2>
+      <p class="subtitle">Обсуждается в 4 созвонах. Решение «делаем» есть. Владельца нет.</p>
+      <div class="ghost-grid">
+        <div class="ghost-item">
+          <div class="ghost-icon">👤</div>
+          <div class="ghost-label">Ответственный</div>
+          <div class="ghost-value">Не назначен</div>
+        </div>
+        <div class="ghost-item">
+          <div class="ghost-icon">📋</div>
+          <div class="ghost-label">Формат</div>
+          <div class="ghost-value">Не определён</div>
+        </div>
+        <div class="ghost-item">
+          <div class="ghost-icon">👩‍🏫</div>
+          <div class="ghost-label">Преподаватели</div>
+          <div class="ghost-value">Не назначены</div>
+        </div>
+        <div class="ghost-item">
+          <div class="ghost-icon">💰</div>
+          <div class="ghost-label">Цена</div>
+          <div class="ghost-value">Не обсуждалась</div>
+        </div>
+      </div>
+      <div class="warning-bar" style="border-left-color:#ffaa00;background:rgba(255,170,0,0.06)">
+        Каждый участник считает, что этим занимается кто-то другой. До запуска — 14 дней.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Circular wait -->
+  <div class="slide" data-slide="3">
+    <div class="slide-inner">
+      <p class="subtitle mono red">Проблема #3</p>
+      <h2>Круговое ожидание — <span class="red">deadlock</span></h2>
+      <div class="circle-diagram">
+        <div class="circle-ring">
+          <svg class="circle-svg" viewBox="0 0 380 380">
+            <path class="arrow-path" d="M 210 50 Q 320 100 300 230" />
+            <path class="arrow-path" d="M 270 270 Q 190 340 100 270" />
+            <path class="arrow-path" d="M 70 230 Q 50 100 170 50" />
+          </svg>
+          <div class="circle-node">
+            <div class="circle-name">Алексей</div>
+            <div class="circle-wait">ждёт цены<br>от Виктора</div>
+          </div>
+          <div class="circle-node">
+            <div class="circle-name">Виктор</div>
+            <div class="circle-wait">ждёт лендинг<br>от Лены</div>
+          </div>
+          <div class="circle-node">
+            <div class="circle-name">Лена</div>
+            <div class="circle-wait">ждёт описания<br>от Алексея</div>
+          </div>
+        </div>
+      </div>
+      <div class="warning-bar">
+        Никто не может начать работу. Каждый ждёт результат от следующего в цепочке.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Two dates -->
+  <div class="slide" data-slide="4">
+    <div class="slide-inner">
+      <p class="subtitle mono red">Проблема #4</p>
+      <h2>Команда работает от <span class="red">разных дат</span></h2>
+      <div class="timeline">
+        <div class="date-group june1">
+          <div class="date-big green">1 июня</div>
+          <div class="date-who">
+            <strong>Георгий</strong> — зафиксировал на синке 5 мая<br>
+            <strong>Виктор</strong> — строит план продаж от этой даты
+          </div>
+        </div>
+        <div class="gap-label">
+          <div class="gap-badge">−14 дней</div>
+        </div>
+        <div class="date-group june15">
+          <div class="date-big red">15 июня</div>
+          <div class="date-who">
+            <strong>Оля</strong> — расписание и партнёрские школы<br>
+            <strong>Лена</strong> — рекламная кампания
+          </div>
+        </div>
+      </div>
+      <div class="warning-bar">
+        Искажение через промежуточные обсуждения. Оля уже отправила документы в школы-партнёры с датой 15 июня. Георгий не в курсе.
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Actions -->
+  <div class="slide" data-slide="5">
+    <div class="slide-inner">
+      <p class="subtitle mono green">Рекомендации</p>
+      <h2>Четыре шага <span class="green">до понедельника</span></h2>
+      <div class="action-list">
+        <div class="action-item">
+          <div class="action-num">01</div>
+          <div class="action-text">
+            <h3>Назначить владельца интенсива</h3>
+            <p>Один человек, полная ответственность: формат, преподаватели, цена, запуск. Без владельца проект не стартует.</p>
+          </div>
+        </div>
+        <div class="action-item">
+          <div class="action-num">02</div>
+          <div class="action-text">
+            <h3>Разорвать круг ожидания</h3>
+            <p>Алексей отправляет описания Лене без цен. Лена делает лендинг с плейсхолдером. Виктор ставит цены в готовый лендинг.</p>
+          </div>
+        </div>
+        <div class="action-item">
+          <div class="action-num">03</div>
+          <div class="action-text">
+            <h3>Синхронизировать дату запуска</h3>
+            <p>Единый канал: 1 июня — окончательно. Оля перевыпускает документы для партнёрских школ.</p>
+          </div>
+        </div>
+        <div class="action-item">
+          <div class="action-num">04</div>
+          <div class="action-text">
+            <h3>Объединить усилия по продажам</h3>
+            <p>Виктор и Максим на одном созвоне решают: люди, бот или оба. Один бюджет, один план, один ответственный.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation dots -->
+<div class="nav-dots" id="navDots"></div>
+<div class="slide-counter" id="counter">1 / 6</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const navDotsContainer = document.getElementById('navDots');
+const counter = document.getElementById('counter');
+let current = 0;
+
+// Create nav dots
+slides.forEach((_, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => goTo(i));
+  navDotsContainer.appendChild(dot);
+});
+
+function goTo(n) {
+  if (n < 0 || n >= slides.length) return;
+  slides[current].classList.remove('active');
+  navDotsContainer.children[current].classList.remove('active');
+  current = n;
+  slides[current].classList.add('active');
+  navDotsContainer.children[current].classList.add('active');
+  counter.textContent = `${current + 1} / ${slides.length}`;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+});
+
+// Subtle background particles
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+for (let i = 0; i < 40; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.5 + 0.5,
+    dx: (Math.random() - 0.5) * 0.3,
+    dy: (Math.random() - 0.5) * 0.3,
+    a: Math.random() * 0.15 + 0.03
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x += p.dx; p.y += p.dy;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.x > canvas.width) p.x = 0;
+    if (p.y < 0) p.y = canvas.height;
+    if (p.y > canvas.height) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
