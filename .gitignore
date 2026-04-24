@@ -1,0 +1,7 @@
+# M07 HITL
+m07-hitl-sandbox/.venv/
+scripts/**/__pycache__/
+inputs/videos/*.mp4
+out/
+*.pyc
+__pycache__/
