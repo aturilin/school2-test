@@ -1,5 +1,5 @@
 ---
-name: index-sheets
+name: sheets-index
 description: Индексирует 10 вкладок Google Spreadsheet кураторов и собирает sheets-index.md с описаниями.
 ---
 
